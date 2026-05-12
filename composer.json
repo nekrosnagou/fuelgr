@@ -1,0 +1,15 @@
+{
+  "name": "fuelgr/api",
+  "description": "FuelGR REST API",
+  "require": {
+    "php": ">=8.0",
+    "slim/slim": "^4.0",
+    "slim/psr7": "^1.6",
+    "firebase/php-jwt": "^7.0"
+  },
+  "autoload": {
+    "psr-4": {
+      "FuelGR\\": "src/"
+    }
+  }
+}

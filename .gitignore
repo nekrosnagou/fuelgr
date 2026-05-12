@@ -1,0 +1,28 @@
+# Dependencies
+vendor/
+node_modules/
+
+# Composer lock (optional to include, but good practice to exclude for student projects)
+# composer.lock
+
+# Environment / secrets
+.env
+.env.local
+config.php
+
+# WampServer / XAMPP logs
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE files
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Database exports (keep only schema, not data with passwords)
+users.sql

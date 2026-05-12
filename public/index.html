@@ -1,0 +1,1173 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FuelGR — Τιμές Καυσίμων Λάρισας</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+  /* ── Variables ────────────────────────────────── */
+  :root {
+    --fuel-red:    #e63946;
+    --fuel-amber:  #f4a261;
+    --fuel-dark:   #1a1a2e;
+    --fuel-mid:    #16213e;
+    --fuel-panel:  #0f3460;
+    --fuel-glass:  rgba(15, 52, 96, 0.85);
+    --fuel-white:  #f0f4ff;
+    --fuel-muted:  #8899bb;
+    --fuel-border: rgba(100, 160, 255, 0.18);
+    --radius:      10px;
+    --shadow:      0 8px 32px rgba(0,0,0,0.4);
+  }
+
+  /* ── Reset ────────────────────────────────────── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; overflow: hidden; }
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--fuel-dark);
+    color: var(--fuel-white);
+  }
+
+  /* ── Layout ───────────────────────────────────── */
+  #app { display: flex; height: 100vh; width: 100vw; position: relative; }
+
+  /* ── Sidebar ──────────────────────────────────── */
+  #sidebar {
+    width: 380px;
+    min-width: 380px;
+    background: var(--fuel-mid);
+    display: flex;
+    flex-direction: column;
+    z-index: 10;
+    box-shadow: 4px 0 24px rgba(0,0,0,0.5);
+    overflow: hidden;
+  }
+
+  #sidebar-header {
+    padding: 20px 24px 16px;
+    background: var(--fuel-panel);
+    border-bottom: 1px solid var(--fuel-border);
+    flex-shrink: 0;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+  .logo-icon {
+    width: 38px; height: 38px;
+    background: var(--fuel-red);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+  }
+  .logo-text {
+    font-family: 'Syne', sans-serif;
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+  }
+  .logo-text span { color: var(--fuel-red); }
+
+  /* Fuel selector */
+  .fuel-selector {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .fuel-btn {
+    padding: 5px 12px;
+    border-radius: 20px;
+    border: 1px solid var(--fuel-border);
+    background: transparent;
+    color: var(--fuel-muted);
+    font-size: 12px;
+    font-family: 'DM Sans', sans-serif;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .fuel-btn:hover { border-color: var(--fuel-amber); color: var(--fuel-amber); }
+  .fuel-btn.active {
+    background: var(--fuel-red);
+    border-color: var(--fuel-red);
+    color: #fff;
+    font-weight: 500;
+  }
+
+  /* Stats bar */
+  #stats-bar {
+    display: flex;
+    gap: 0;
+    padding: 12px 24px;
+    background: rgba(0,0,0,0.2);
+    border-bottom: 1px solid var(--fuel-border);
+    flex-shrink: 0;
+  }
+  .stat-item {
+    flex: 1;
+    text-align: center;
+  }
+  .stat-item + .stat-item {
+    border-left: 1px solid var(--fuel-border);
+  }
+  .stat-label {
+    font-size: 10px;
+    color: var(--fuel-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .stat-value {
+    font-family: 'Syne', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--fuel-white);
+    margin-top: 2px;
+  }
+  .stat-value.max { color: var(--fuel-red); }
+  .stat-value.min { color: #4CAF50; }
+  .stat-value.avg { color: var(--fuel-amber); }
+
+  /* User area */
+  #user-area {
+    padding: 10px 24px;
+    border-bottom: 1px solid var(--fuel-border);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  #login-btn {
+    flex: 1;
+    padding: 8px 16px;
+    background: var(--fuel-red);
+    border: none;
+    border-radius: var(--radius);
+    color: #fff;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+  }
+  #login-btn:hover { background: #c62b38; }
+  #user-info {
+    display: none;
+    flex: 1;
+    align-items: center;
+    gap: 8px;
+  }
+  .user-avatar {
+    width: 32px; height: 32px;
+    background: var(--fuel-red);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+  }
+  .user-name {
+    font-size: 13px;
+    font-weight: 500;
+    flex: 1;
+  }
+  .user-role {
+    font-size: 10px;
+    color: var(--fuel-muted);
+  }
+  #logout-btn {
+    background: none;
+    border: 1px solid var(--fuel-border);
+    border-radius: 6px;
+    color: var(--fuel-muted);
+    padding: 4px 8px;
+    font-size: 11px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  #logout-btn:hover { border-color: var(--fuel-red); color: var(--fuel-red); }
+
+  /* Station list */
+  #station-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px 0;
+  }
+  #station-list::-webkit-scrollbar { width: 4px; }
+  #station-list::-webkit-scrollbar-track { background: transparent; }
+  #station-list::-webkit-scrollbar-thumb { background: var(--fuel-border); border-radius: 2px; }
+
+  .station-card {
+    padding: 12px 24px;
+    cursor: pointer;
+    border-left: 3px solid transparent;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .station-card:hover, .station-card.active {
+    background: rgba(255,255,255,0.04);
+    border-left-color: var(--fuel-red);
+  }
+  .station-brand-badge {
+    width: 44px; height: 44px;
+    border-radius: 8px;
+    background: #fff;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    overflow: hidden;
+    padding: 3px;
+  }
+  .station-brand-badge img {
+    width: 100%; height: 100%;
+    object-fit: contain;
+  }
+  .station-info { flex: 1; min-width: 0; }
+  .station-brand { font-size: 11px; color: var(--fuel-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+  .station-address {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--fuel-white);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-top: 1px;
+  }
+  .station-price {
+    font-family: 'Syne', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--fuel-white);
+    flex-shrink: 0;
+  }
+  .station-price.cheapest { color: #4CAF50; }
+  .station-price.expensive { color: var(--fuel-red); }
+  .no-price { color: var(--fuel-muted); font-size: 12px; }
+
+  /* ── Map ──────────────────────────────────────── */
+  #map-container { flex: 1; position: relative; }
+  #map { width: 100%; height: 100%; }
+
+  /* ── Modals ───────────────────────────────────── */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(4px);
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--fuel-mid);
+    border: 1px solid var(--fuel-border);
+    border-radius: 16px;
+    padding: 28px 32px;
+    width: 90%;
+    max-width: 420px;
+    box-shadow: var(--shadow);
+    animation: modalIn 0.25s ease;
+  }
+  @keyframes modalIn {
+    from { opacity: 0; transform: translateY(16px) scale(0.97); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  .modal-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 20px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .modal-title i { color: var(--fuel-red); }
+  .form-group { margin-bottom: 14px; }
+  .form-label {
+    display: block;
+    font-size: 12px;
+    color: var(--fuel-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+  }
+  .form-input {
+    width: 100%;
+    padding: 10px 14px;
+    background: var(--fuel-dark);
+    border: 1px solid var(--fuel-border);
+    border-radius: 8px;
+    color: var(--fuel-white);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .form-input:focus { border-color: var(--fuel-red); }
+  .form-input[readonly] { opacity: 0.6; cursor: not-allowed; }
+  .btn-primary {
+    width: 100%;
+    padding: 12px;
+    background: var(--fuel-red);
+    border: none;
+    border-radius: 8px;
+    color: #fff;
+    font-family: 'Syne', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+    margin-top: 6px;
+  }
+  .btn-primary:hover { background: #c62b38; }
+  .btn-secondary {
+    width: 100%;
+    padding: 10px;
+    background: transparent;
+    border: 1px solid var(--fuel-border);
+    border-radius: 8px;
+    color: var(--fuel-muted);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-top: 8px;
+  }
+  .btn-secondary:hover { border-color: var(--fuel-muted); color: var(--fuel-white); }
+  .form-error {
+    color: var(--fuel-red);
+    font-size: 12px;
+    margin-top: 6px;
+    display: none;
+  }
+  .form-success {
+    color: #4CAF50;
+    font-size: 13px;
+    margin-top: 8px;
+    display: none;
+  }
+
+  /* ── Infowindow custom ──────────────────────────── */
+  .iw-container {
+    font-family: 'DM Sans', sans-serif;
+    max-width: 300px;
+    color: #1a1a2e;
+  }
+  .iw-header {
+    display: flex; align-items: center; gap: 8px;
+    margin-bottom: 10px;
+  }
+  .iw-brand-logo {
+    width: 36px; height: 36px;
+    background: #fff;
+    border-radius: 6px;
+    padding: 3px;
+    display: flex; align-items: center; justify-content: center;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+  .iw-brand-logo img { width: 100%; height: 100%; object-fit: contain; }
+  .iw-brand {
+    background: #e63946;
+    color: white;
+    padding: 3px 8px;
+    border-radius: 5px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+  }
+  .iw-owner { font-size: 13px; font-weight: 600; }
+  .iw-address { font-size: 12px; color: #666; margin-bottom: 10px; }
+  .iw-prices { border-top: 1px solid #eee; padding-top: 10px; }
+  .iw-price-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 3px 0;
+    font-size: 12px;
+  }
+  .iw-price-row .fuel-name { color: #444; }
+  .iw-price-row .fuel-cost { font-weight: 700; color: #1a1a2e; }
+  .iw-actions { margin-top: 10px; }
+  .iw-order-btn {
+    width: 100%;
+    padding: 7px;
+    background: #e63946;
+    border: none;
+    border-radius: 6px;
+    color: white;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  /* ── Owner orders panel ────────────────────────── */
+  .orders-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+    margin-top: 10px;
+  }
+  .orders-table th {
+    text-align: left;
+    padding: 6px 8px;
+    background: var(--fuel-dark);
+    font-size: 10px;
+    text-transform: uppercase;
+    color: var(--fuel-muted);
+    letter-spacing: 0.5px;
+  }
+  .orders-table td { padding: 7px 8px; border-bottom: 1px solid var(--fuel-border); }
+  .orders-table tr:last-child td { border-bottom: none; }
+  .order-status {
+    padding: 2px 7px;
+    border-radius: 10px;
+    font-size: 10px;
+    font-weight: 600;
+  }
+  .order-status.pending { background: rgba(244,162,97,0.2); color: var(--fuel-amber); }
+  .order-status.done    { background: rgba(76,175,80,0.2);  color: #4CAF50; }
+  .action-link {
+    color: var(--fuel-red);
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 11px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    transition: background 0.2s;
+  }
+  .action-link:hover { background: rgba(230,57,70,0.15); }
+  .action-link.exec { color: #4CAF50; }
+  .action-link.exec:hover { background: rgba(76,175,80,0.15); }
+
+  /* Larger orders modal */
+  .modal-lg { max-width: 600px; }
+  .modal-scroll { max-height: 360px; overflow-y: auto; }
+  .modal-scroll::-webkit-scrollbar { width: 4px; }
+  .modal-scroll::-webkit-scrollbar-thumb { background: var(--fuel-border); }
+
+  /* ── Toast ────────────────────────────────────── */
+  #toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: var(--fuel-panel);
+    border: 1px solid var(--fuel-border);
+    color: var(--fuel-white);
+    padding: 10px 20px;
+    border-radius: 24px;
+    font-size: 13px;
+    z-index: 9999;
+    transition: transform 0.3s ease;
+    box-shadow: var(--shadow);
+  }
+  #toast.show { transform: translateX(-50%) translateY(0); }
+  #toast.success { border-color: #4CAF50; }
+  #toast.error   { border-color: var(--fuel-red); }
+
+  /* ── Loading spinner ──────────────────────────── */
+  .spinner {
+    display: inline-block;
+    width: 16px; height: 16px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Scrollbar for sidebar */
+  #sidebar::-webkit-scrollbar { width: 0; }
+
+  /* price update row */
+  .price-edit-row {
+    display: flex; align-items: center; gap: 8px;
+    padding: 5px 0; border-bottom: 1px solid var(--fuel-border);
+    font-size: 12px;
+  }
+  .price-edit-row .f-name { flex: 1; color: var(--fuel-white); }
+  .price-edit-row .f-price { color: var(--fuel-amber); width: 60px; text-align: right; }
+  .price-edit-input {
+    width: 70px; padding: 3px 6px;
+    background: var(--fuel-dark);
+    border: 1px solid var(--fuel-border);
+    border-radius: 4px;
+    color: var(--fuel-white);
+    font-size: 12px;
+    outline: none;
+  }
+  .price-save-btn {
+    background: var(--fuel-red); border: none; color: #fff;
+    padding: 3px 7px; border-radius: 4px; font-size: 11px; cursor: pointer;
+  }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ── SIDEBAR ── -->
+  <aside id="sidebar">
+    <div id="sidebar-header">
+      <div class="logo">
+        <div class="logo-icon">⛽</div>
+        <div class="logo-text">Fuel<span>GR</span></div>
+      </div>
+      <!-- Fuel type selector -->
+      <div class="fuel-selector">
+        <button class="fuel-btn active" data-fuel="1">Αμόλυβδη 95</button>
+        <button class="fuel-btn" data-fuel="2">Αμόλυβδη 100</button>
+        <button class="fuel-btn" data-fuel="4">Diesel</button>
+        <button class="fuel-btn" data-fuel="5">LPG</button>
+      </div>
+    </div>
+
+    <!-- Stats bar -->
+    <div id="stats-bar">
+      <div class="stat-item">
+        <div class="stat-label">Πρατήρια</div>
+        <div class="stat-value" id="stat-count">—</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-label">Ελάχιστη</div>
+        <div class="stat-value min" id="stat-min">—</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-label">Μέση</div>
+        <div class="stat-value avg" id="stat-avg">—</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-label">Μέγιστη</div>
+        <div class="stat-value max" id="stat-max">—</div>
+      </div>
+    </div>
+
+    <!-- User area -->
+    <div id="user-area">
+      <button id="login-btn" onclick="openModal('login-modal')">
+        <i class="fa fa-user"></i> Σύνδεση
+      </button>
+      <div id="user-info">
+        <div class="user-avatar"><i class="fa fa-user" style="font-size:13px"></i></div>
+        <div>
+          <div class="user-name" id="user-name-display"></div>
+          <div class="user-role" id="user-role-display"></div>
+        </div>
+        <button id="logout-btn" onclick="logout()">Έξοδος</button>
+        <button id="owner-orders-btn" onclick="loadOwnerOrders()" style="display:none;background:var(--fuel-amber);border:none;border-radius:6px;color:#1a1a2e;padding:4px 8px;font-size:11px;font-weight:600;cursor:pointer">Παραγγελίες</button>
+        <button id="owner-prices-btn" onclick="openPriceEdit()" style="display:none;background:var(--fuel-panel);border:1px solid var(--fuel-border);border-radius:6px;color:var(--fuel-white);padding:4px 8px;font-size:11px;cursor:pointer">Τιμές</button>
+      </div>
+    </div>
+
+    <!-- Station list -->
+    <div id="station-list">
+      <div style="padding:20px 24px; color:var(--fuel-muted); font-size:13px; text-align:center">
+        <div class="spinner"></div>
+        <div style="margin-top:8px">Φόρτωση πρατηρίων…</div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ── MAP ── -->
+  <div id="map-container">
+    <div id="map"></div>
+  </div>
+</div>
+
+<!-- ── MODALS ── -->
+
+<!-- Login Modal -->
+<div class="modal-overlay" id="login-modal">
+  <div class="modal">
+    <div class="modal-title"><i class="fa fa-user-circle"></i> Σύνδεση</div>
+    <div class="form-group">
+      <label class="form-label">Όνομα Χρήστη</label>
+      <input class="form-input" id="login-username" placeholder="π.χ. user1" autocomplete="username">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Κωδικός</label>
+      <input class="form-input" id="login-password" type="password" autocomplete="current-password" placeholder="••••••">
+    </div>
+    <div class="form-error" id="login-error"></div>
+    <button class="btn-primary" id="login-submit-btn" onclick="submitLogin()"><i class="fa fa-sign-in-alt"></i> Σύνδεση</button>
+    <button class="btn-secondary" onclick="closeModal('login-modal')">Άκυρο</button>
+    <div style="margin-top:12px; font-size:11px; color:var(--fuel-muted)">
+      💡 Δοκιμάστε user1/pass1 (ιδιοκτήτης) ή user160/pass160 (καταναλωτής)
+    </div>
+  </div>
+</div>
+
+<!-- Order Modal -->
+<div class="modal-overlay" id="order-modal">
+  <div class="modal">
+    <div class="modal-title"><i class="fa fa-shopping-cart"></i> Νέα Παραγγελία</div>
+    <input type="hidden" id="order-station-id">
+    <input type="hidden" id="order-fuel-type">
+    <input type="hidden" id="order-fuel-subtype">
+    <div class="form-group">
+      <label class="form-label">Πρατήριο</label>
+      <input class="form-input" id="order-station-name" readonly>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Καύσιμο</label>
+      <input class="form-input" id="order-fuel-name" readonly>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Τιμή / Λίτρο</label>
+      <input class="form-input" id="order-price" readonly>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Ποσότητα (Λίτρα)</label>
+      <input class="form-input" id="order-quantity" type="number" min="1" max="200" step="1" placeholder="π.χ. 40" oninput="calcTotal()">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Εκτιμώμενο Κόστος</label>
+      <input class="form-input" id="order-total" readonly placeholder="—">
+    </div>
+    <div class="form-error" id="order-error"></div>
+    <div class="form-success" id="order-success"></div>
+    <button class="btn-primary" onclick="submitOrder()"><i class="fa fa-check"></i> Υποβολή Παραγγελίας</button>
+    <button class="btn-secondary" onclick="closeModal('order-modal')">Άκυρο</button>
+  </div>
+</div>
+
+<!-- Owner Orders Modal -->
+<div class="modal-overlay" id="owner-orders-modal">
+  <div class="modal modal-lg">
+    <div class="modal-title"><i class="fa fa-list"></i> Παραγγελίες Πρατηρίου</div>
+    <div class="modal-scroll" id="orders-content">
+      <div style="text-align:center; color:var(--fuel-muted); padding:20px"><div class="spinner"></div></div>
+    </div>
+    <button class="btn-secondary" onclick="closeModal('owner-orders-modal')" style="margin-top:14px">Κλείσιμο</button>
+  </div>
+</div>
+
+<!-- Price Edit Modal -->
+<div class="modal-overlay" id="price-edit-modal">
+  <div class="modal modal-lg">
+    <div class="modal-title"><i class="fa fa-tags"></i> Διαχείριση Τιμών</div>
+    <div class="modal-scroll" id="price-edit-content">
+      <div style="text-align:center; color:var(--fuel-muted); padding:20px"><div class="spinner"></div></div>
+    </div>
+    <button class="btn-secondary" onclick="closeModal('price-edit-modal')" style="margin-top:14px">Κλείσιμο</button>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<!-- Google Maps -->
+<script>
+// ── Config ────────────────────────────────────────────────────────────────────
+const API_BASE = '/fuelgr/api';
+
+// ── State ─────────────────────────────────────────────────────────────────────
+let map, infoWindow;
+let markers = {};
+let stations = [];
+let currentFuelType = 1;
+let auth = JSON.parse(localStorage.getItem('fuelgr_auth') || 'null');
+
+// ── Auth UI ───────────────────────────────────────────────────────────────────
+function updateAuthUI() {
+  if (auth) {
+    document.getElementById('login-btn').style.display = 'none';
+    const ui = document.getElementById('user-info');
+    ui.style.display = 'flex';
+    document.getElementById('user-name-display').textContent = auth.username;
+    document.getElementById('user-role-display').textContent = auth.role === 'owner' ? '🏪 Ιδιοκτήτης' : '🚗 Καταναλωτής';
+    document.getElementById('owner-orders-btn').style.display = auth.role === 'owner' ? 'block' : 'none';
+    document.getElementById('owner-prices-btn').style.display = auth.role === 'owner' ? 'block' : 'none';
+  } else {
+    document.getElementById('login-btn').style.display = 'flex';
+    document.getElementById('user-info').style.display = 'none';
+  }
+}
+
+function logout() {
+  auth = null;
+  localStorage.removeItem('fuelgr_auth');
+  updateAuthUI();
+  showToast('Αποσυνδεθήκατε', 'success');
+}
+
+// ── API Helper ────────────────────────────────────────────────────────────────
+async function api(method, path, body = null) {
+  const headers = { 'Content-Type': 'application/json' };
+  if (auth?.token) headers['Authorization'] = `Bearer ${auth.token}`;
+  const res = await fetch(`${API_BASE}${path}`, {
+    method,
+    headers,
+    body: body ? JSON.stringify(body) : null,
+  });
+  return res.json();
+}
+
+// ── Load stations + prices ────────────────────────────────────────────────────
+async function loadStations(fuelType) {
+  currentFuelType = fuelType;
+
+  // Clear existing markers
+  Object.values(markers).forEach(m => m.setMap(null));
+  markers = {};
+
+  // Show loading
+  document.getElementById('station-list').innerHTML = `
+    <div style="padding:20px 24px; color:var(--fuel-muted); font-size:13px; text-align:center">
+      <div class="spinner"></div>
+      <div style="margin-top:8px">Φόρτωση…</div>
+    </div>`;
+
+  try {
+    const [data, stats] = await Promise.all([
+      api('GET', `/stations/${fuelType}`),
+      api('GET', `/stations/${fuelType}/stats`),
+    ]);
+
+    stations = data;
+    renderStats(stats);
+    renderStationList(data, stats);
+    renderMarkers(data, stats);
+  } catch(e) {
+    document.getElementById('station-list').innerHTML = `
+      <div style="padding:20px 24px; color:var(--fuel-red); font-size:13px">
+        ⚠️ Αδυναμία φόρτωσης. Ελέγξτε τη σύνδεση με το API.
+      </div>`;
+  }
+}
+
+// ── Stats ─────────────────────────────────────────────────────────────────────
+function renderStats(stats) {
+  document.getElementById('stat-count').textContent = stats.stationCount ?? '—';
+  document.getElementById('stat-min').textContent   = stats.minPrice ? `€${parseFloat(stats.minPrice).toFixed(3)}` : '—';
+  document.getElementById('stat-avg').textContent   = stats.avgPrice ? `€${parseFloat(stats.avgPrice).toFixed(3)}` : '—';
+  document.getElementById('stat-max').textContent   = stats.maxPrice ? `€${parseFloat(stats.maxPrice).toFixed(3)}` : '—';
+}
+
+// ── Brand logo mapper ─────────────────────────────────────────────────────────
+function getBrandLogo(brand) {
+  if (!brand) return 'logos/default.png';
+  const b = brand.trim().toUpperCase();
+  const map = {
+    'AEGEAN':   'logos/AEGEAN.png',
+    'AVIN':     'logos/AVIN.png',
+    'BP':       'logos/BP.png',
+    'CYCLON':   'logos/CYCLON.png',
+    'DRACOIL':  'logos/DRACOIL.png',
+    'EKO':      'logos/EKO.png',
+    'ΕΤΕΚΑ':    'logos/ΕΤΕΚΑ.png',
+    'JETOIL':   'logos/JETOIL.png',
+    'JET OIL':  'logos/JETOIL.png',
+    'KAOIL':    'logos/KAOIL.png',
+    'KA OIL':   'logos/KAOIL.png',
+    'REVOIL':   'logos/REVOIL.png',
+    'SHELL':    'logos/SHELL.png',
+    'SILKOIL':  'logos/SILKOIL.png',
+    'SILK OIL': 'logos/SILKOIL.png',
+    'ΕΛΙΝΟΙΛ':  'logos/ΕΛΙΝΟΙΛ.png',
+    'ΕΛΙΝ':     'logos/ΕΛΙΝ.png',
+    'ΤΡΙΑΙΝΑ':  'logos/ΤΡΙΑΙΝΑ.png',
+    'Α.Π.': 'logos/Α.Π..png',
+  };
+  // exact match
+  if (map[b]) return map[b];
+  // partial match
+  for (const key of Object.keys(map)) {
+    if (b.includes(key) || key.includes(b)) return map[key];
+  }
+  return 'logos/default.png';
+}
+
+// ── Station list ──────────────────────────────────────────────────────────────
+function renderStationList(data, stats) {
+  const minP = parseFloat(stats.minPrice);
+  const maxP = parseFloat(stats.maxPrice);
+
+  const html = data.map((s, i) => {
+    const price = parseFloat(s.price);
+    const pClass = !s.price ? '' : price === minP ? 'cheapest' : price === maxP ? 'expensive' : '';
+    const pText = s.price ? `€${price.toFixed(3)}` : '<span class="no-price">—</span>';
+    const logo = getBrandLogo(s.brand);
+    return `
+      <div class="station-card" id="scard-${s.gasStationID}" onclick="focusStation(${i})">
+        <div class="station-brand-badge"><img src="${logo}" alt="${s.brand || ''}" onerror="this.src='logos/default.png'"></div>
+        <div class="station-info">
+          <div class="station-brand">${s.brand || 'Ανεξάρτητο'}</div>
+          <div class="station-address">${s.address || 'Χωρίς διεύθυνση'}</div>
+        </div>
+        <div class="station-price ${pClass}">${pText}</div>
+      </div>`;
+  }).join('');
+
+  document.getElementById('station-list').innerHTML = html || `
+    <div style="padding:20px; color:var(--fuel-muted); text-align:center">Δεν βρέθηκαν πρατήρια</div>`;
+}
+
+// ── Map markers ───────────────────────────────────────────────────────────────
+function renderMarkers(data, stats) {
+  const minP = parseFloat(stats.minPrice);
+  const maxP = parseFloat(stats.maxPrice);
+
+  data.forEach((s, i) => {
+    if (!s.lat || !s.lng) return;
+    const price = parseFloat(s.price);
+
+    // Ελέγχουμε αν είναι το πρατήριο του συνδεδεμένου ιδιοκτήτη
+    const isMyStation = auth && auth.role === 'owner' && auth.stationID == s.gasStationID;
+
+    let color = '#8899bb';
+    if (s.price) {
+      if (price === minP) color = '#4CAF50';
+      else if (price === maxP) color = '#e63946';
+      else color = '#f4a261';
+    }
+
+    const marker = new google.maps.Marker({
+      position: { lat: parseFloat(s.lat), lng: parseFloat(s.lng) },
+      map,
+      title: s.address,
+      icon: isMyStation ? {
+        // Αστέρι για το δικό μου πρατήριο
+        path: google.maps.SymbolPath.CIRCLE,
+        scale: 14,
+        fillColor: '#FFD700',
+        fillOpacity: 1,
+        strokeColor: '#1a1a2e',
+        strokeWeight: 3,
+      } : {
+        path: google.maps.SymbolPath.CIRCLE,
+        scale: 9,
+        fillColor: color,
+        fillOpacity: 1,
+        strokeColor: '#fff',
+        strokeWeight: 2,
+      },
+      label: {
+        text: isMyStation ? '★' : (s.price ? `${price.toFixed(2)}` : '?'),
+        color: isMyStation ? '#1a1a2e' : '#fff',
+        fontSize: isMyStation ? '14px' : '9px',
+        fontWeight: 'bold',
+      },
+      zIndex: isMyStation ? 999 : 1,  // εμφανίζεται πάνω από τα άλλα
+    });
+
+    marker.addListener('click', () => focusStation(i));
+    markers[s.gasStationID] = marker;
+  });
+}
+
+// ── Focus station ─────────────────────────────────────────────────────────────
+async function focusStation(index) {
+  const s = stations[index];
+  if (!s) return;
+
+  // Highlight card
+  document.querySelectorAll('.station-card').forEach(c => c.classList.remove('active'));
+  const card = document.getElementById(`scard-${s.gasStationID}`);
+  if (card) { card.classList.add('active'); card.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }
+
+  // Pan map
+  if (map && s.lat && s.lng) {
+    map.panTo({ lat: parseFloat(s.lat), lng: parseFloat(s.lng) });
+    map.setZoom(15);
+  }
+
+  // Open infowindow
+  const marker = markers[s.gasStationID];
+  if (!marker) return;
+
+  // Fetch pricelist
+  let prices = [];
+  try { prices = await api('GET', `/stations/${s.gasStationID}/pricelist`); } catch(e) {}
+
+  const priceRows = prices.map(p =>
+    `<div class="iw-price-row">
+       <span class="fuel-name">${p.fuelName}</span>
+       <span class="fuel-cost">€${parseFloat(p.fuelPrice).toFixed(3)}</span>
+     </div>`
+  ).join('') || '<div style="color:#999;font-size:12px">Δεν βρέθηκαν τιμές</div>';
+
+  const orderBtn = auth?.role === 'consumer' && s.price
+    ? `<div class="iw-actions">
+         <button class="iw-order-btn" onclick="openOrderModal(${s.gasStationID}, '${escHtml(s.address)}', ${currentFuelType}, ${s.fuelSubTypeID || 0}, '${escHtml(s.fuelNormalName || '')}', ${s.price})">
+           🛒 Παραγγελία
+         </button>
+       </div>`
+    : '';
+
+  const content = `
+    <div class="iw-container">
+      <div class="iw-header">
+        <div class="iw-brand-logo"><img src="${getBrandLogo(s.brand)}" alt="${s.brand || ''}" onerror="this.src='logos/default.png'" style="width:100%;height:100%;object-fit:contain"></div>
+        <span class="iw-owner">${escHtml(s.owner || '')}</span>
+      </div>
+      <div class="iw-address">📍 ${escHtml(s.address || '')}</div>
+      ${s.phone ? `<div style="font-size:12px;color:#666;margin-bottom:8px">📞 ${s.phone}</div>` : ''}
+      <div class="iw-prices"><strong style="font-size:11px;color:#888">ΤΙΜΟΚΑΤΑΛΟΓΟΣ</strong>${priceRows}</div>
+      ${orderBtn}
+    </div>`;
+
+  infoWindow.setContent(content);
+  infoWindow.open(map, marker);
+}
+
+// ── Order modal ───────────────────────────────────────────────────────────────
+function openOrderModal(stationID, stationName, fuelTypeID, fuelSubTypeID, fuelName, price) {
+  if (!auth) { openModal('login-modal'); return; }
+  document.getElementById('order-station-id').value = stationID;
+  document.getElementById('order-fuel-type').value  = fuelTypeID;
+  document.getElementById('order-fuel-subtype').value = fuelSubTypeID;
+  document.getElementById('order-station-name').value = stationName;
+  document.getElementById('order-fuel-name').value = fuelName;
+  document.getElementById('order-price').value = `€${parseFloat(price).toFixed(3)}`;
+  document.getElementById('order-quantity').value = '';
+  document.getElementById('order-total').value = '';
+  document.getElementById('order-error').style.display = 'none';
+  document.getElementById('order-success').style.display = 'none';
+  openModal('order-modal');
+}
+
+function calcTotal() {
+  const price = parseFloat(document.getElementById('order-price').value.replace('€',''));
+  const qty   = parseFloat(document.getElementById('order-quantity').value);
+  if (!isNaN(price) && !isNaN(qty) && qty > 0) {
+    document.getElementById('order-total').value = `€${(price * qty).toFixed(2)}`;
+  }
+}
+
+async function submitOrder() {
+  const stationID   = parseInt(document.getElementById('order-station-id').value);
+  const fuelTypeID  = parseInt(document.getElementById('order-fuel-type').value);
+  const fuelSubType = parseInt(document.getElementById('order-fuel-subtype').value);
+  const qty         = parseFloat(document.getElementById('order-quantity').value);
+  const errEl       = document.getElementById('order-error');
+  const okEl        = document.getElementById('order-success');
+
+  errEl.style.display = 'none';
+  if (!qty || qty <= 0) { errEl.textContent = 'Εισάγετε έγκυρη ποσότητα.'; errEl.style.display = 'block'; return; }
+
+  try {
+    const res = await api('POST', '/orders', { gasStationID: stationID, fuelTypeID, fuelSubTypeID: fuelSubType, quantity: qty });
+    if (res.error) { errEl.textContent = res.error; errEl.style.display = 'block'; }
+    else {
+      okEl.textContent = `✅ Παραγγελία #${res.orderID} υποβλήθηκε! Κόστος: €${res.totalCost}`;
+      okEl.style.display = 'block';
+      showToast('Η παραγγελία υποβλήθηκε!', 'success');
+    }
+  } catch(e) { errEl.textContent = 'Σφάλμα σύνδεσης.'; errEl.style.display = 'block'; }
+}
+
+// ── Login ─────────────────────────────────────────────────────────────────────
+async function submitLogin() {
+  const u = document.getElementById('login-username').value.trim();
+  const p = document.getElementById('login-password').value.trim();
+  const errEl = document.getElementById('login-error');
+  errEl.style.display = 'none';
+
+  if (!u || !p) { errEl.textContent = 'Συμπληρώστε τα πεδία.'; errEl.style.display = 'block'; return; }
+
+  const btn = document.getElementById('login-submit-btn');
+  btn.innerHTML = '<div class="spinner"></div>';
+  btn.disabled = true;
+
+  try {
+    const res = await api('POST', '/auth/login', { username: u, password: p });
+    if (res.error) {
+      errEl.textContent = res.error;
+      errEl.style.display = 'block';
+    } else {
+      auth = res;
+      localStorage.setItem('fuelgr_auth', JSON.stringify(auth));
+      closeModal('login-modal');
+      updateAuthUI();
+      loadStations(currentFuelType);
+      showToast(`Καλωσήρθατε, ${auth.username}!`, 'success');
+    }
+  } catch(e) {
+    errEl.textContent = 'Σφάλμα σύνδεσης.';
+    errEl.style.display = 'block';
+  }
+
+  btn.innerHTML = '<i class="fa fa-sign-in-alt"></i> Σύνδεση';
+  btn.disabled = false;
+}
+
+// ── Owner orders ──────────────────────────────────────────────────────────────
+async function loadOwnerOrders() {
+  if (!auth || auth.role !== 'owner') return;
+  openModal('owner-orders-modal');
+  document.getElementById('orders-content').innerHTML = '<div style="text-align:center;padding:20px"><div class="spinner"></div></div>';
+
+  try {
+    const orders = await api('GET', `/orders/station/${auth.stationID}`);
+    if (orders.error) {
+      document.getElementById('orders-content').innerHTML = `<div style="color:var(--fuel-red)">${orders.error}</div>`;
+      return;
+    }
+    if (!orders.length) {
+      document.getElementById('orders-content').innerHTML = '<div style="color:var(--fuel-muted);padding:16px">Δεν υπάρχουν παραγγελίες.</div>';
+      return;
+    }
+
+    const rows = orders.map(o => `
+      <tr>
+        <td>#${o.orderID}</td>
+        <td>${escHtml(o.username)}</td>
+        <td>${escHtml(o.fuelName)}</td>
+        <td>${o.quantity}L</td>
+        <td>€${parseFloat(o.pricePerLt).toFixed(3)}</td>
+        <td>€${parseFloat(o.totalCost).toFixed(2)}</td>
+        <td><span class="order-status ${o.isExecuted ? 'done' : 'pending'}">${o.isExecuted ? 'Εκτελέστηκε' : 'Εκκρεμεί'}</span></td>
+        <td>
+          ${!o.isExecuted ? `<button class="action-link exec" onclick="executeOrder(${o.orderID})">▶ Εκτέλεση</button>` : ''}
+          <button class="action-link" onclick="deleteOrder(${o.orderID}, 'owner')">🗑</button>
+        </td>
+      </tr>`).join('');
+
+    document.getElementById('orders-content').innerHTML = `
+      <table class="orders-table">
+        <thead><tr><th>#</th><th>Χρήστης</th><th>Καύσιμο</th><th>Ποσ.</th><th>€/lt</th><th>Σύνολο</th><th>Κατάσταση</th><th>Ενέργειες</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>`;
+  } catch(e) {
+    document.getElementById('orders-content').innerHTML = '<div style="color:var(--fuel-red)">Σφάλμα φόρτωσης.</div>';
+  }
+}
+
+async function executeOrder(orderID) {
+  try {
+    const res = await api('PUT', `/orders/${orderID}/execute`);
+    if (res.error) showToast(res.error, 'error');
+    else { showToast('Παραγγελία εκτελέστηκε!', 'success'); loadOwnerOrders(); }
+  } catch(e) { showToast('Σφάλμα.', 'error'); }
+}
+
+async function deleteOrder(orderID) {
+  if (!confirm('Διαγραφή παραγγελίας;')) return;
+  try {
+    const res = await api('DELETE', `/orders/${orderID}`);
+    if (res.error) showToast(res.error, 'error');
+    else { showToast('Παραγγελία διαγράφηκε.', 'success'); loadOwnerOrders(); }
+  } catch(e) { showToast('Σφάλμα.', 'error'); }
+}
+
+// ── Price edit ────────────────────────────────────────────────────────────────
+async function openPriceEdit() {
+  if (!auth || auth.role !== 'owner') return;
+  openModal('price-edit-modal');
+  document.getElementById('price-edit-content').innerHTML = '<div style="text-align:center;padding:20px"><div class="spinner"></div></div>';
+
+  try {
+    const prices = await api('GET', `/stations/${auth.stationID}/pricelist`);
+    if (!prices.length) {
+      document.getElementById('price-edit-content').innerHTML = '<div style="color:var(--fuel-muted)">Δεν βρέθηκαν τιμές.</div>';
+      return;
+    }
+
+    const rows = prices.map(p => `
+      <div class="price-edit-row">
+        <span class="f-name">${escHtml(p.fuelName)}</span>
+        <span class="f-price">€${parseFloat(p.fuelPrice).toFixed(3)}</span>
+        <input class="price-edit-input" type="number" step="0.001" min="0.5" max="5" placeholder="${p.fuelPrice}" id="pe-${p.fuelSubTypeID}">
+        <button class="price-save-btn" onclick="savePrice(${auth.stationID}, ${p.fuelSubTypeID}, 'pe-${p.fuelSubTypeID}')">💾</button>
+      </div>`).join('');
+
+    document.getElementById('price-edit-content').innerHTML = rows;
+  } catch(e) {
+    document.getElementById('price-edit-content').innerHTML = '<div style="color:var(--fuel-red)">Σφάλμα φόρτωσης.</div>';
+  }
+}
+
+async function savePrice(stationID, fuelSubTypeID, inputId) {
+  const val = parseFloat(document.getElementById(inputId).value);
+  if (isNaN(val) || val <= 0) { showToast('Εισάγετε έγκυρη τιμή', 'error'); return; }
+
+  try {
+    const res = await api('PUT', `/pricelist/${stationID}/${fuelSubTypeID}`, { fuelPrice: val });
+    if (res.error) showToast(res.error, 'error');
+    else { showToast(`Τιμή ενημερώθηκε: €${val.toFixed(3)}`, 'success'); openPriceEdit(); }
+  } catch(e) { showToast('Σφάλμα.', 'error'); }
+}
+
+// ── Fuel type buttons ─────────────────────────────────────────────────────────
+document.querySelectorAll('.fuel-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.fuel-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    loadStations(parseInt(btn.dataset.fuel));
+  });
+});
+
+// ── Modal helpers ─────────────────────────────────────────────────────────────
+function openModal(id)  { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+document.querySelectorAll('.modal-overlay').forEach(overlay => {
+  overlay.addEventListener('click', e => {
+    if (e.target === overlay) overlay.classList.remove('open');
+  });
+});
+
+// Allow Enter key in login form
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && document.getElementById('login-modal').classList.contains('open')) submitLogin();
+});
+
+// ── Toast ─────────────────────────────────────────────────────────────────────
+let toastTimeout;
+function showToast(msg, type = '') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = `show ${type}`;
+  clearTimeout(toastTimeout);
+  toastTimeout = setTimeout(() => t.className = '', 3000);
+}
+
+// ── Utility ───────────────────────────────────────────────────────────────────
+function escHtml(s) {
+  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+// ── Google Maps init ─────────────────────────────────────────────────────────
+function initMap() {
+  map = new google.maps.Map(document.getElementById('map'), {
+    center: { lat: 39.637, lng: 22.417 },
+    zoom: 11,
+    mapTypeId: 'roadmap',
+    styles: [
+      { elementType: 'geometry',        stylers: [{ color: '#1a1a2e' }] },
+      { elementType: 'labels.text.fill',stylers: [{ color: '#8899bb' }] },
+      { elementType: 'labels.text.stroke',stylers: [{ color: '#1a1a2e' }] },
+      { featureType: 'road',            elementType: 'geometry', stylers: [{ color: '#16213e' }] },
+      { featureType: 'road',            elementType: 'geometry.stroke', stylers: [{ color: '#0f3460' }] },
+      { featureType: 'road',            elementType: 'labels.text.fill', stylers: [{ color: '#9ca5b3' }] },
+      { featureType: 'road.highway',    elementType: 'geometry', stylers: [{ color: '#0f3460' }] },
+      { featureType: 'water',           elementType: 'geometry', stylers: [{ color: '#0f3460' }] },
+      { featureType: 'water',           elementType: 'labels.text.fill', stylers: [{ color: '#515c6d' }] },
+      { featureType: 'poi',             stylers: [{ visibility: 'off' }] },
+      { featureType: 'transit',         stylers: [{ visibility: 'off' }] },
+      { featureType: 'administrative',  elementType: 'geometry.stroke', stylers: [{ color: '#0f3460' }] },
+      { featureType: 'landscape',       elementType: 'geometry', stylers: [{ color: '#16213e' }] },
+    ],
+    disableDefaultUI: false,
+    zoomControl: true,
+    mapTypeControl: false,
+    streetViewControl: false,
+    fullscreenControl: false,
+  });
+
+  infoWindow = new google.maps.InfoWindow({ maxWidth: 320 });
+
+  updateAuthUI();
+  loadStations(currentFuelType);
+}
+</script>
+
+
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCXac5sTfY5zOiNp-sGvVv6SExcFmeZoYk&callback=initMap" async defer></script>
+</body>
+</html>
