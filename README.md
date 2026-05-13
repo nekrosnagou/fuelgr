@@ -64,13 +64,13 @@ An interactive web application for tracking fuel prices at gas stations, powered
 
 ### 1. Clone the repository
 ```bash
-git clone https://github.com/YOUR_USERNAME/fuelgr.git
+git clone https://github.com/nekrosnagou/fuelgr.git
 cd fuelgr
 ```
 
 ### 2. Install PHP dependencies
 ```bash
-composer install --no-audit
+composer install 
 ```
 
 ### 3. Set up the database
@@ -79,9 +79,9 @@ Open **phpMyAdmin** → create a database named `fuelgr`, then import in this or
 
 ```
 sql/schema.sql       ← creates all tables
-gasstations.sql      ← station data   (provided separately)
-pricedata.sql        ← price data     (provided separately)
-users.sql            ← user accounts  (provided separately)
+gasstations.sql      ← station data   
+pricedata.sql        ← price data     
+users.sql            ← user accounts  
 ```
 
 Then run this query to assign owner roles:
@@ -92,7 +92,7 @@ WHERE username IN (SELECT DISTINCT username FROM gasstations);
 
 ### 4. Add your Google Maps API Key
 
-In `public/index.html`, find the last `<script>` tag and replace:
+In `public/index.html`, find the  `<script src="https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_MAPS_API_KEY&callback=initMap" async defer></script>` tag and replace:
 ```
 YOUR_GOOGLE_MAPS_API_KEY
 ```
