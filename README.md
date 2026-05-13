@@ -1,6 +1,6 @@
 # ⛽ FuelGR — Fuel Price Tracking Web App
 
-> Εργασία 2α — Ηλεκτρονικό Επιχειρείν | Πανεπιστήμιο Θεσσαλίας
+> Academic project - E-Business | Digital Systems University of Thessaly
 
 An interactive web application for tracking fuel prices at gas stations, powered by a custom-built REST API.
 
@@ -8,7 +8,8 @@ An interactive web application for tracking fuel prices at gas stations, powered
 
 ## 📸 Preview
 
-> *(Add a screenshot of your app here after deploying)*
+<img width="1917" height="986" alt="image" src="https://github.com/user-attachments/assets/96ae1a05-3cda-4e0c-a352-698177cbad83" />
+
 
 ---
 
@@ -108,10 +109,11 @@ http://localhost/fuelgr/public/index.html
 
 | Role | Username | Password |
 |------|----------|----------|
-| Owner (Station #441) | `user1` | `pass1` |
-| Consumer | *(create one without a station)* | — |
-
-> ⚠️ The seed data (`users.sql`) contains plain-text passwords for development only. In production, use `password_hash()`.
+| Owner (Station #441) |  `user1`  |  `pass1`  |
+| Consumer |  `user2`  |  `pass2`  |
+|   ...    |    ...    |    ...    |
+| Comsumer | `user160` | `pass160` |
+> ⚠️ The seed data (`users.sql`, `gasstations.sql`, `pricedata.sql`) contains made up plain-text for development only.
 
 ---
 
@@ -137,10 +139,9 @@ fuelgr/
 - All foreign keys use `CASCADE` on update/delete
 - JWT tokens expire after 24 hours
 - Endpoint #1 supports both JSON (default) and XML (`?format=xml`)
-- The `users.sql` file is excluded from the repo for privacy — share it separately
 
 ---
 
 ## 📜 License
 
-Academic project — Πανεπιστήμιο Θεσσαλίας, ΠΣ Μηχανικών Πληροφορικής ΤΕ
+Academic project — University of Thessaly, Digital Systems
